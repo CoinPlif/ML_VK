@@ -1,1 +1,1 @@
-**ML Cource from VK**
+**ML Course from VK**
