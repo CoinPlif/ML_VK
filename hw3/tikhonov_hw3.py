@@ -186,7 +186,7 @@ clf = GradientBoostingClassifier()
 wine = load_wine()
 X_train, X_test, y_train, y_test = train_test_split(wine.data, wine.target, test_size=0.1, stratify=wine.target, random_state = 42)
 
-my_clf.fit(X_train, y_train, init_model = LogisticRegression())
+my_clf.fit(X_train, y_train)
 clf.fit(X_train, y_train)
 
 print(accuracy_score(y_pred=clf.predict(X_test), y_true=y_test))
@@ -215,7 +215,7 @@ y
 
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size = 0.3)
 
-myclf = MyGradientBoostingClassifier(loss = "LOG")
+myclf = MyGradientBoostingClassifier(loss = "MSE")
 myclf.fit(X_train, y_train)
 
 y_pred = myclf.predict(X_val)
@@ -263,7 +263,7 @@ for loss in tqdm(['MSE','EXP','LOG']):
                 best_params["loss"] = loss
                 best_params["min_samples_split"] = min_samples_split
 
-best_params
+best_params, best_accuracy
 
 """## BooBag BagBoo (1 балл)
 
@@ -280,7 +280,7 @@ best_params
 
 from sklearn.ensemble import RandomForestRegressor
 
-boobag = MyGradientBoostingClassifier(max_depth=5)
+boobag = MyGradientBoostingClassifier()
 boobag.fit(X_train, y_train, base_model = RandomForestRegressor())
 
 y_train
@@ -293,7 +293,7 @@ y_pred_boobag
 
 accuracy_score(y_val, y_pred_boobag)
 
-"""Обычные деревья более слабые чем случайные леса, потому что у дерева высокий varience, а у ансабля от поменьше(за счет тоо, что их много и результат усредняется), что повышает генерализирующее свойство всей модели. Получается, что базовая модель сильнее => антиградиент лучше предсказывается => лучше скор бустинга
+"""Обычные деревья маленькой глубины обладают маленьким малеким разбросом и большим смещением - бустинг уменьшает смещение, за счет исправления ошибки композиции предыдущих моделей. Однако, когда строим бустинг на моделях, у которых маленький и смещение и разброс, почти никакого прироста в скоре нет.
 
 **Ensemble on Boostings**
 """
@@ -301,13 +301,13 @@ accuracy_score(y_val, y_pred_boobag)
 y_pred_list = []
 
 for boostings_idx in range(10):
-    boosting = MyGradientBoostingClassifier(max_depth=3, subsample = 0.3)
+    boosting = MyGradientBoostingClassifier(subsample = 1, colsample=1)
     boosting.fit(X_train, y_train)
     y_pred_list.append(boosting.predict(X_val))
 
 y_pred_list = np.array(y_pred_list)
 
-y_pred_list.T
+y_pred_list
 
 def Ensemble(x):
     vals, counts = np.unique(x, return_counts=True)
@@ -318,7 +318,7 @@ y_pred_bagboo[y_pred_bagboo == 0] = -1
 
 accuracy_score(y_val, y_pred_bagboo)
 
-"""Опять же ансамбль из бустингов обученных на бутстрапированной выборке показал результаты лучше чем бустинг на деревьях, потому бустинги имеют маленький bias, но обладают высоким varience, который снижается за счет ансамблирования (голосования за наиболее частый класс)
+"""Ансамбль бустингов должен уменьшать разброс, который и так будет маленький, потому в бустинге он уменьшается за счет последовательного исправления ошибок предыдущих моделей. То есть величина, которую хотелось бы уменьшать с помощью ансамбля и так уже маленькая => значительного изменения в скоре нет по сравнению с обычным бустингом на деревьях(одним)
 
 ## Умная инициализация (1 балл)
 
@@ -345,7 +345,7 @@ for i in range(len(models)):
 
 df
 
-"""По результатам получилось, что качество с начальной моделью RandomForestClassifier, лучше всех оставшихся моделей. Однако начальная модель LogisticRegression, тоже побила скор начальной модели без ниициализации на обычных DecisionTreeRegressor()
+"""По результатам получилось, что качество с начальной моделью LogisticRegression, лучше всех оставшихся моделей. Однако начальная модель RandomForestClassifier, тоже побила скор начальной модели без ниициализации на обычных DecisionTreeRegressor()
 
 ## Фидбек (бесценно)
 
